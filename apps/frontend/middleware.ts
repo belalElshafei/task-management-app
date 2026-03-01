@@ -12,6 +12,11 @@ export function middleware(request: NextRequest) {
     response.headers.set('x-middleware-cache', 'no-cache');
     response.headers.set('Cache-Control', 'no-store, max-age=0');
 
+    // CRITICAL: On the first successful login redirect, clear the cache to purge any stale "unauthorized" states
+    if (request.nextUrl.searchParams.get('auth') === 'success') {
+        response.headers.set('Clear-Site-Data', '"cache"');
+    }
+
     const isNextInternalRequest = request.headers.get('x-nextjs-data') || pathname.startsWith('/_next');
     const isPublicRoute = pathname === '/login' || pathname === '/register';
 

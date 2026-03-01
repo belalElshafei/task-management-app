@@ -11,6 +11,8 @@ const sendTokenResponse = (authData, statusCode, res) => {
         httpOnly: true,
         secure: true, // Required for sameSite: 'none'
         sameSite: 'none',
+        partitioned: true, // Required for cross-site on public suffixes like Railway
+        path: '/',
     };
 
     const refreshOptions = {
@@ -82,7 +84,9 @@ const logout = async (req, res) => {
     const cookieOptions = {
         httpOnly: true,
         secure: true,
-        sameSite: 'none'
+        sameSite: 'none',
+        partitioned: true,
+        path: '/'
     };
     res.clearCookie('refreshToken', cookieOptions);
     res.clearCookie('token', cookieOptions);
