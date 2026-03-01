@@ -21,7 +21,7 @@ export default function LoginPage() {
                 console.log('Login successful, waiting for cookie sync...');
                 setTimeout(() => {
                     window.location.href = '/dashboard';
-                }, 800);
+                }, 1500);
             },
             onError: (err: any) => {
                 console.error('Login error:', err);

@@ -10,6 +10,7 @@ export function middleware(request: NextRequest) {
     // Create a base response that prevents caching
     const response = NextResponse.next();
     response.headers.set('x-middleware-cache', 'no-cache');
+    response.headers.set('Cache-Control', 'no-store, max-age=0');
 
     const isNextInternalRequest = request.headers.get('x-nextjs-data') || pathname.startsWith('/_next');
     const isPublicRoute = pathname === '/login' || pathname === '/register';
@@ -22,6 +23,7 @@ export function middleware(request: NextRequest) {
         console.warn(`[Middleware] No token found. Redirecting to /login (no-cache).`);
         const redirectResponse = NextResponse.redirect(new URL('/login', request.url));
         redirectResponse.headers.set('x-middleware-cache', 'no-cache');
+        redirectResponse.headers.set('Cache-Control', 'no-store, max-age=0');
         return redirectResponse;
     }
 
