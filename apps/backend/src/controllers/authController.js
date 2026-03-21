@@ -3,13 +3,17 @@ const authService = require('../services/authService');
 const logger = require('../utils/logger');
 
 // Helper to set cookie and send response
-const sendTokenResponse = (authData, statusCode, res) => {
+const sendTokenResponse = (authData, statusCode, req, res) => {
     const { user, accessToken, refreshToken } = authData;
 
-    // Cookie options
+    // Intelligent Secure flag
+    const host = req.headers.host || '';
+    const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+    const isSecure = process.env.NODE_ENV === 'production' && !isLocal;
+
     const options = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: isSecure,
         sameSite: 'strict',
     };
 
@@ -41,7 +45,7 @@ const sendTokenResponse = (authData, statusCode, res) => {
 const register = async (req, res) => {
     const userData = matchedData(req, { locations: ['body'] });
     const authData = await authService.registerUser(userData);
-    sendTokenResponse(authData, 201, res);
+    sendTokenResponse(authData, 201, req, res);
 };
 
 // @desc    Login user
@@ -50,16 +54,18 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     const credentials = matchedData(req, { locations: ['body'] });
     const authData = await authService.loginUser(credentials.email, credentials.password);
-    sendTokenResponse(authData, 200, res);
+    sendTokenResponse(authData, 200, req, res);
 };
 
 // @desc    Get current user
 // @route   GET /api/auth/me
 // @access  Private
 const getMe = async (req, res) => {
+    const user = req.user.toObject ? req.user.toObject() : { ...req.user };
+    user.name = user.name || user.email || 'User';
     res.status(200).json({
         success: true,
-        data: req.user
+        data: user
     });
 };
 
@@ -79,8 +85,12 @@ const refreshToken = async (req, res) => {
 // @route   POST /api/auth/logout
 // @access  Private
 const logout = async (req, res) => {
-    res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
-    res.clearCookie('token', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
+    const host = req.headers.host || '';
+    const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+    const isSecure = process.env.NODE_ENV === 'production' && !isLocal;
+
+    res.clearCookie('refreshToken', { httpOnly: true, secure: isSecure, sameSite: 'strict' });
+    res.clearCookie('token', { httpOnly: true, secure: isSecure, sameSite: 'strict' });
 
     logger.info('User logged out successfully');
 

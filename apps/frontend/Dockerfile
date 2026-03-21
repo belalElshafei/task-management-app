@@ -1,5 +1,5 @@
 # Build Stage
-FROM node:20-alpine AS builder
+FROM mirror.gcr.io/library/node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -13,9 +13,13 @@ COPY apps/backend/package.json ./apps/backend/
 COPY apps/frontend/package.json ./apps/frontend/
 
 # Use BuildKit cache mount to speed up npm install
-# We remove --quiet so the user can see it's actually moving
+# Increase npm reliability for flaky network
+RUN npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000
+
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --workspace=@task-management/frontend --no-audit --no-fund
+    npm ci --workspace=@task-management/frontend --no-audit --no-fund --registry=https://registry.npmmirror.com
 
 # Copy frontend source
 COPY apps/frontend ./apps/frontend
@@ -24,7 +28,7 @@ COPY apps/frontend ./apps/frontend
 RUN npm run build --workspace=@task-management/frontend
 
 # Production Stage
-FROM node:20-alpine AS runner
+FROM mirror.gcr.io/library/node:20-alpine3.19 AS runner
 
 WORKDIR /app
 

@@ -25,11 +25,7 @@ const swaggerSpec = require('./src/config/swagger');
 dotenv.config();
 const app = express();
 
-// 2. Database & Service Connections
-if (process.env.NODE_ENV !== 'test') {
-    connectDB();
-    connectRedis();
-}
+// 2. Database & Service Connections (awaited in server init below)
 
 // 3. Global Security & Parsing Middleware
 app.use(helmet()); // Sets various HTTP headers for security
@@ -89,6 +85,9 @@ app.get('/', (req, res) => {
 app.use('/api/auth', apiLimiter, require('./src/routes/authRoutes'));
 app.use('/api/projects', apiLimiter, require('./src/routes/projectRoutes'));
 app.use('/api/tasks', apiLimiter, require('./src/routes/taskRoutes'));
+app.use('/api/users', apiLimiter, require('./src/routes/userRoutes'));
+app.use('/api/invitations', apiLimiter, require('./src/routes/invitationRoutes'));
+app.use('/api/notifications', apiLimiter, require('./src/routes/notificationRoutes'));
 
 // 9. 404 Handler
 app.use((req, res, next) => {
@@ -102,13 +101,25 @@ Sentry.setupExpressErrorHandler(app);
 // 11. Global Error Middleware (Must be last)
 app.use(errorHandler);
 
-// 12. Server Initialization
+// 12. Server Initialization (after DB/Redis are ready in production)
 const PORT = process.env.PORT || 5000;
+const http = require('http');
+const { initializeSocket } = require('./src/socket/socketHandler');
 
 let server;
 if (process.env.NODE_ENV !== 'test') {
-    server = app.listen(PORT, () => {
-        logger.info(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+    (async () => {
+        await connectDB();
+        await connectRedis();
+        server = http.createServer(app);
+        initializeSocket(server);
+        require('./src/services/notificationService'); // Activate event listeners
+        server.listen(PORT, () => {
+            logger.info(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+        });
+    })().catch((err) => {
+        logger.error('Startup failed:', err);
+        process.exit(1);
     });
 }
 

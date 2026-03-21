@@ -2,19 +2,39 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../lib/api-client';
 
 export const useRegister = () => {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (data: any) => {
             const response = await apiClient.post('/auth/register', data);
             return response.data;
         },
+        onSuccess: (data) => {
+            const user = data?.data;
+            if (user) {
+                queryClient.setQueryData(['user'], {
+                    ...user,
+                    name: user.name || user.email || 'User',
+                });
+            }
+        },
     });
 };
 
 export const useLogin = () => {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (data: any) => {
             const response = await apiClient.post('/auth/login', data);
             return response.data;
+        },
+        onSuccess: (data) => {
+            const user = data?.data;
+            if (user) {
+                queryClient.setQueryData(['user'], {
+                    ...user,
+                    name: user.name || user.email || 'User',
+                });
+            }
         },
     });
 };
@@ -36,9 +56,14 @@ export const useMe = () => {
         queryKey: ['user'],
         queryFn: async () => {
             const response = await apiClient.get('/auth/me');
-            return response.data.data;
+            const data = response.data?.data;
+            return {
+                ...data,
+                name: data?.name || data?.email || 'User',
+            };
         },
         retry: false,
-        staleTime: 5 * 60 * 1000, // Cache user data for 5 minutes
+        staleTime: 0,
+        refetchOnWindowFocus: true,
     });
 };

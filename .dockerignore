@@ -1,10 +1,13 @@
 # Deny list for Docker Context (Monorepo Root)
 node_modules
 **/node_modules
+apps/backend/node_modules
+apps/frontend/node_modules
 .next
 **/.next
 apps/frontend/.next
-out
+apps/frontend/out
+apps/backend/dist
 build
 dist
 .git

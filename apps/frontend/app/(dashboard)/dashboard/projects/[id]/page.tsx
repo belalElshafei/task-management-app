@@ -7,6 +7,8 @@ import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { confirmPremium } from '@/hooks/use-confirm';
 import { useMe } from '@/hooks/use-auth';
+import { UserSearchDialog } from '@/components/user-search-dialog';
+import { Users } from 'lucide-react';
 
 const COLUMNS = ['Todo', 'In Progress', 'Done'];
 
@@ -25,6 +27,7 @@ export default function ProjectDetailsPage() {
     const [newTaskDesc, setNewTaskDesc] = useState('');
     const [newTaskPriority, setNewTaskPriority] = useState('Medium');
     const [isAddingTask, setIsAddingTask] = useState(false);
+    const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
 
     // Project Editing State
     const [isEditingProject, setIsEditingProject] = useState(false);
@@ -146,6 +149,13 @@ export default function ProjectDetailsPage() {
                 )}
                 <div className="flex gap-3">
                     <button
+                        onClick={() => setIsInviteDialogOpen(true)}
+                        className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 border shadow-sm transition-all flex items-center gap-2"
+                    >
+                        <Users className="h-4 w-4" />
+                        Invite Member
+                    </button>
+                    <button
                         onClick={() => setIsAddingTask(true)}
                         className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 shadow-sm transition-all"
                     >
@@ -153,6 +163,13 @@ export default function ProjectDetailsPage() {
                     </button>
                 </div>
             </header>
+
+            <UserSearchDialog
+                isOpen={isInviteDialogOpen}
+                onClose={() => setIsInviteDialogOpen(false)}
+                targetType="Project"
+                targetId={id}
+            />
 
             <div className="flex-1 flex gap-6 overflow-x-auto pb-4">
                 {COLUMNS.map((column) => (

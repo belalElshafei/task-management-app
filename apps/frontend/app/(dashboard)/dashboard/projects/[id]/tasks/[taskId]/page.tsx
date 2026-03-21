@@ -5,6 +5,8 @@ import { useTask, useUpdateTask } from '@/hooks/use-tasks';
 import { useState, useEffect } from 'react';
 import { useProject } from '@/hooks/use-projects';
 import { toast } from '@/hooks/use-toast';
+import { UserSearchDialog } from '@/components/user-search-dialog';
+import { Users } from 'lucide-react';
 
 export default function TaskDetailsPage() {
     const { id: projectId, taskId } = useParams() as { id: string; taskId: string };
@@ -18,6 +20,7 @@ export default function TaskDetailsPage() {
     const [description, setDescription] = useState('');
     const [status, setStatus] = useState('');
     const [priority, setPriority] = useState('');
+    const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
 
     useEffect(() => {
         if (task) {
@@ -62,13 +65,29 @@ export default function TaskDetailsPage() {
                     </nav>
                     <h1 className="text-3xl font-bold text-gray-900">{task.title}</h1>
                 </div>
-                <button
-                    onClick={() => router.back()}
-                    className="text-sm font-medium text-gray-500 hover:text-gray-700"
-                >
-                    &larr; Back
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsInviteDialogOpen(true)}
+                        className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 border shadow-sm transition-all flex items-center gap-2"
+                    >
+                        <Users className="h-4 w-4" />
+                        Invite to Task
+                    </button>
+                    <button
+                        onClick={() => router.back()}
+                        className="text-sm font-medium text-gray-500 hover:text-gray-700"
+                    >
+                        &larr; Back
+                    </button>
+                </div>
             </header>
+
+            <UserSearchDialog
+                isOpen={isInviteDialogOpen}
+                onClose={() => setIsInviteDialogOpen(false)}
+                targetType="Task"
+                targetId={taskId}
+            />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main Edit Form */}

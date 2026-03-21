@@ -49,11 +49,19 @@ class TaskService {
     async getAllUserTasks(userId, { page = 1, limit = 10 }) {
         const skip = (page - 1) * limit;
 
-        // Get all projects where user is a member
+        // Get all projects where user is a member (for authorization boundary)
         const projects = await Project.find({ members: userId }).select('_id');
         const projectIds = projects.map(p => p._id);
 
-        const query = { project: { $in: projectIds } };
+        // Standard behaviour: show only tasks the user owns or is assigned to,
+        // not every task in projects they are a member of.
+        const query = {
+            project: { $in: projectIds },
+            $or: [
+                { assignedTo: userId },
+                { createdBy: userId },
+            ],
+        };
 
         const tasks = await Task.find(query)
             .populate('project', 'name')

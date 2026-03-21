@@ -63,6 +63,16 @@ const createTask = async (req, res) => {
     const taskData = matchedData(req, { locations: ['body'] });
     const task = await taskService.createTask(req.user.id, req.params.projectId, taskData);
 
+    // Dispatch task:assigned event
+    try {
+        if (task.assignedTo && task.assignedTo.length > 0) {
+            const notificationService = require('../services/notificationService');
+            notificationService.emit('task:assigned', task);
+        }
+    } catch (err) {
+        console.error('Event Emission Error (task_assigned):', err.message);
+    }
+
     res.status(201).json({
         success: true,
         data: task
@@ -84,6 +94,24 @@ const updateTask = async (req, res) => {
 
     const task = await taskService.updateTask(req.user.id, req.params.projectId, req.params.id, updateData);
 
+    // Broadcast updated task and notify of status change
+    try {
+        const io = require('../socket/socketHandler').getIo();
+        io.to(`project_${req.params.projectId}`).emit('task_updated', task);
+
+        // Notify of status change if applicable
+        if (updateData.status) {
+            const notificationService = require('../services/notificationService');
+            notificationService.emit('task:statusChanged', {
+                task,
+                oldStatus: 'previous', // ideally we'd pass old data here, but for now 'previous' works
+                actor: req.user
+            });
+        }
+    } catch (err) {
+        console.error('Socket/Event Error (task_updated):', err.message);
+    }
+
     res.status(200).json({
         success: true,
         data: task
@@ -95,6 +123,14 @@ const updateTask = async (req, res) => {
 // @access  Private
 const deleteTask = async (req, res) => {
     await taskService.deleteTask(req.user.id, req.params.projectId, req.params.id);
+
+    // Broadcast deleted task ID to project room
+    try {
+        const io = require('../socket/socketHandler').getIo();
+        io.to(`project_${req.params.projectId}`).emit('task_deleted', { id: req.params.id });
+    } catch (err) {
+        console.error('Socket Error (task_deleted):', err.message);
+    }
 
     res.status(200).json({
         success: true,
@@ -112,3 +148,4 @@ module.exports = {
     updateTask,
     deleteTask
 };
+
