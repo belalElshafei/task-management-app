@@ -1,5 +1,5 @@
 {
-    "name": "task-management-monorepo",
+    "name": "task-management-app",
     "private": true,
     "scripts": {
         "backend:dev": "npm run dev --workspace=@task-management/backend",
