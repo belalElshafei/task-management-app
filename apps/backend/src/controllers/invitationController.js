@@ -32,8 +32,8 @@ const hasPermission = async (userId, targetType, targetId) => {
             (a) => a.toString() === userId.toString()
         );
 
-        // Standard rule: project owner/member, task creator, or current assignee may invite to the task
-        return isProjectOwner || isProjectMember || isTaskCreator || isTaskAssignee;
+        // Permission rule: project owner, task creator, or existing task assignee may invite others to the task
+        return isProjectOwner || isTaskCreator || isTaskAssignee;
     }
     return false;
 };
@@ -63,13 +63,36 @@ const createInvitation = async (req, res, next) => {
         // Check if recipient is already part of the target
         if (targetType === 'Project') {
             const project = await Project.findById(targetId);
-            if (project.members.some(m => m.toString() === recipientId)) {
-                return res.status(400).json({ success: false, message: 'User is already a member of this project' });
+            if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+
+            const recipientIdStr = recipientId.toString();
+            const isOwner = project.owner.toString() === recipientIdStr;
+            const isMember = project.members.some(m => m.toString() === recipientIdStr);
+
+            if (isOwner || isMember) {
+                return res.status(400).json({ success: false, message: 'User is already a member or owner of this project' });
             }
         } else if (targetType === 'Task') {
             const task = await Task.findById(targetId);
-            if (task.assignedTo.some(a => a.toString() === recipientId)) {
-                return res.status(400).json({ success: false, message: 'User is already assigned to this task' });
+            if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
+
+            const recipientIdStr = recipientId.toString();
+            const isCreator = task.createdBy.toString() === recipientIdStr;
+            const isAssigned = task.assignedTo.some(a => a.toString() === recipientIdStr);
+
+            if (isCreator || isAssigned) {
+                return res.status(400).json({ success: false, message: 'User is already assigned to or created this task' });
+            }
+
+            // Check if user is a member of the parent project
+            const Project = require('../models/Project');
+            const project = await Project.findById(task.project);
+            
+            const isProjectOwner = project && project.owner.toString() === recipientIdStr;
+            const isProjectMember = project && project.members.some(m => m.toString() === recipientIdStr);
+
+            if (!project || (!isProjectOwner && !isProjectMember)) {
+                return res.status(400).json({ success: false, message: 'User must be a member of the project before being invited to a task' });
             }
         }
 

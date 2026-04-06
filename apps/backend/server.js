@@ -114,6 +114,7 @@ if (process.env.NODE_ENV !== 'test') {
         server = http.createServer(app);
         initializeSocket(server);
         require('./src/services/notificationService'); // Activate event listeners
+        require('./src/services/emailService'); // Activate email listeners
         server.listen(PORT, () => {
             logger.info(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
         });

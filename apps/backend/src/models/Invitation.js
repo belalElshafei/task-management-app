@@ -34,7 +34,7 @@ const invitationSchema = new mongoose.Schema(
     }
 );
 
-// Prevent duplicate pending invitations between the same parties for the same target
-invitationSchema.index({ sender: 1, recipient: 1, targetId: 1, status: 1 }, { unique: true, partialFilterExpression: { status: 'Pending' } });
+// Prevent duplicate pending invitations for the same recipient and target
+invitationSchema.index({ recipient: 1, targetId: 1, status: 1 }, { unique: true, partialFilterExpression: { status: 'Pending' } });
 
 module.exports = mongoose.model('Invitation', invitationSchema);

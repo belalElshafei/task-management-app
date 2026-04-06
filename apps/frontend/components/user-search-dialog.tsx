@@ -79,13 +79,17 @@ export function UserSearchDialog({ isOpen, onClose, targetType, targetId }: User
                             users.map((user: any) => {
                                 const isAlreadyMember = user.isMember;
                                 const isAlreadyInvited = user.isInvited || invitedUsers.has(user._id);
-                                const isDisabled = isAlreadyMember || isAlreadyInvited || isInviting;
+                                const isNotProjectMember = targetType === 'Task' && user.isProjectMember === false;
+                                const isDisabled = isAlreadyMember || isAlreadyInvited || isInviting || isNotProjectMember;
 
                                 return (
                                     <div key={user._id} className="flex items-center justify-between p-3 border rounded-md">
                                         <div>
                                             <p className="font-medium text-sm">{user.name}</p>
                                             <p className="text-xs text-gray-500">{user.email}</p>
+                                            {isNotProjectMember && (
+                                                <p className="text-[10px] text-amber-600 font-medium">Must be in project first</p>
+                                            )}
                                         </div>
                                         <Button
                                             size="sm"
@@ -97,6 +101,8 @@ export function UserSearchDialog({ isOpen, onClose, targetType, targetId }: User
                                                 <><Check className="mr-2 h-4 w-4" /> Member</>
                                             ) : isAlreadyInvited ? (
                                                 <><Check className="mr-2 h-4 w-4" /> Invited</>
+                                            ) : isNotProjectMember ? (
+                                                <><UserPlus className="mr-2 h-4 w-4" /> N/A</>
                                             ) : (
                                                 <><UserPlus className="mr-2 h-4 w-4" /> Invite</>
                                             )}

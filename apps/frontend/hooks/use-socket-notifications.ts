@@ -20,6 +20,9 @@ export const useSocketNotifications = () => {
         socket.on('new_notification', (data) => {
             console.log('[Socket] Received new notification:', data);
             queryClient.invalidateQueries({ queryKey: ['notifications'] });
+            if (data && data.type === 'INVITATION_RECEIVED') {
+                queryClient.invalidateQueries({ queryKey: ['invitations'] });
+            }
         });
 
         socket.on('invitation_accepted', (invitation) => {
