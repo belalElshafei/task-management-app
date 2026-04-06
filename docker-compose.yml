@@ -1,17 +1,33 @@
 services:
-  app:
-    build: .
+  backend:
+    build:
+      context: .
+      dockerfile: ./apps/backend/Dockerfile
+      network: host
     ports:
       - "5000:5000"
     env_file:
-      - .env
-    environment:
-      - NODE_ENV=production
-      - MONGO_URI=mongodb://mongo:27017/taskmanager
-      - REDIS_URL=redis://redis:6379
+      - ./apps/backend/.env
     depends_on:
       - mongo
       - redis
+    networks:
+      - task-network
+    restart: always
+
+  frontend:
+    build:
+      context: .
+      dockerfile: ./apps/frontend/Dockerfile
+      network: host
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:5000/api
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5000/api
+    depends_on:
+      - backend
     networks:
       - task-network
     restart: always
