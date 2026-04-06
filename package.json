@@ -6,7 +6,8 @@
         "backend:start": "npm run start --workspace=@task-management/backend",
         "frontend:dev": "npm run dev --workspace=@task-management/frontend",
         "frontend:build": "npm run build --workspace=@task-management/frontend",
-        "backend:test": "npm test --workspace=@task-management/backend"
+        "backend:test": "npm test --workspace=@task-management/backend",
+        "test": "npm run backend:test"
     },
     "workspaces": [
         "apps/*"
